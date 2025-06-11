@@ -1,0 +1,37 @@
+- hosts: minecraft
+  become: yes
+  tasks:
+    - name: Install Java, wget, and screen
+      yum:
+        name: 
+          - java-21-amazon-corretto
+          - wget
+          - screen
+        state: present
+
+    - name: Create Minecraft server directory
+      file:
+        path: /home/ec2-user/minecraft-server
+        state: directory
+        owner: ec2-user
+
+    - name: Download Minecraft server .jar
+      get_url:
+        url: https://piston-data.mojang.com/v1/objects/e6ec2f64e6080b9b5d9b471b291c33cc7f509733/server.jar
+        dest: /home/ec2-user/minecraft-server/server.jar
+
+    - name: Accept EULA
+      copy:
+        content: "eula=true\n"
+        dest: /home/ec2-user/minecraft-server/eula.txt
+
+    - name: Copy systemd unit file
+      copy:
+        src: files/minecraft.service
+        dest: /etc/systemd/system/minecraft.service
+
+    - name: Enable and start Minecraft service
+      systemd:
+        name: minecraft
+        enabled: yes
+        state: started
